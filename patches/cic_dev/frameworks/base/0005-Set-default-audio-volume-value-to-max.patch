@@ -1,0 +1,55 @@
+From a88c6b11887238dec7c435c13e54f97b04d75ca8 Mon Sep 17 00:00:00 2001
+From: bxu10x <bingx.xu@intel.com>
+Date: Thu, 2 Jan 2020 14:16:16 +0800
+Subject: [PATCH] Set default audio volume value to max
+
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-88933
+---
+ media/java/android/media/AudioSystem.java                     |  8 ++++----
+ services/core/java/com/android/server/audio/AudioService.java | 10 ++++++++++
+ 2 files changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/media/java/android/media/AudioSystem.java b/media/java/android/media/AudioSystem.java
+index 7c893d0..cae0dd5 100644
+--- a/media/java/android/media/AudioSystem.java
++++ b/media/java/android/media/AudioSystem.java
+@@ -882,11 +882,11 @@ public class AudioSystem
+     }
+ 
+     public static int[] DEFAULT_STREAM_VOLUME = new int[] {
+-        4,  // STREAM_VOICE_CALL
++        5,  // STREAM_VOICE_CALL
+         7,  // STREAM_SYSTEM
+-        5,  // STREAM_RING
+-        5, // STREAM_MUSIC
+-        6,  // STREAM_ALARM
++        7,  // STREAM_RING
++        15, // STREAM_MUSIC
++        7,  // STREAM_ALARM
+         5,  // STREAM_NOTIFICATION
+         7,  // STREAM_BLUETOOTH_SCO
+         7,  // STREAM_SYSTEM_ENFORCED
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index 75f6cb3..6640d9e 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -734,6 +734,16 @@ public class AudioService extends IAudioService.Stub
+                     (maxCallVolume * 3) / 4;
+         }
+ 
++        int defaultCallVolume = SystemProperties.getInt("ro.config.vc_call_vol_default", -1);
++        if (defaultCallVolume != -1 &&
++                defaultCallVolume <= MAX_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL] &&
++                defaultCallVolume >= MIN_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL]) {
++            AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL] = defaultCallVolume;
++        } else {
++            AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_VOICE_CALL] =
++                    (maxCallVolume * 3) / 4;
++        }
++
+         int maxMusicVolume = SystemProperties.getInt("ro.config.media_vol_steps", -1);
+         if (maxMusicVolume != -1) {
+             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
+-- 
+2.7.4
+
